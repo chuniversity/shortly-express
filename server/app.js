@@ -19,42 +19,83 @@ app.use(express.static(path.join(__dirname, '../public')));
 
 
 app.get('/',
-  (req, res) => {
+  (req, res, next) => {
     console.log('general get request');
     res.render('index');
   });
 
 // route for going to login "endpoint"
-app.get('/login', (req, res) => {
+app.get('/login', (req, res, next) => {
   console.log('login get request');
   res.render('login');
 });
 
-app.post('/login', (req, res) => {
-
+app.post('/login', (req, res, next) => {
+  //compare(attempted, password, salt) {
+  // logs in as existing user
+  // extract user and password from response body
+  var name = req.body.username;
+  var pass = req.body.password;
+  var userObject = { username: name };
+  // run users.get to return the rows that match username
+  models.Users.get(userObject)
+    .then((user) => {
+      // userArray = [id, username, password, salt]
+      console.log(user);
+      // if userArray doesnt exist, then stay on login page (????)
+      if (!user) {
+        console.log('user array doesnt exist');
+        res.redirect(400, '/login');
+      } else {
+        if (models.Users.compare(pass, user.password, user.salt)) {
+          // then if compare returns true (password is correct), redirect to index
+          console.log('compare finished running');
+          // res.redirect('/');
+          res.redirect(200, '/');
+        } else {
+          // but if compare returns false (password is incorrect), then stay on login page (????)
+          res.redirect(400, '/login');
+        }
+      }
+    })
+    .catch((err) => {
+      console.error('error logging in: ' + err.message);
+    });
 });
 //routers for signup
 
-app.get('/signup', (req, res) => {
+app.get('/signup', (req, res, next) => {
   console.log('signup get request');
   res.render('signup');
 });
 
-app.post('/signup', (req, res) => {
+app.post('/signup', (req, res, next) => {
   // get data from request body
   // var params = [req.body.]
-  console.log(req.body);
-  // call users.create with it
-  return models.Users.create(req.body)
-    .then((data) => {
-      console.log('user successfully created');
+  var name = req.body.username;
+  var options = { username: name };
+  models.Users.get(options)
+    .then((resultsArray) => { // the data that returns from querying users table with name up above
+      var test = resultsArray;
+      if (resultsArray) {
+        // redirect to signup
+        res.redirect('/signup');
+      } else {
+        // call users.create with it
+        models.Users.create(req.body)
+          .then((data) => {
+            console.log('user successfully created');
+            res.redirect('/');
+            res.status(201).send(data);
+          })
+          .catch((err) => {
+            res.status(500).send(err);
+          });
+      }
     })
     .catch((err) => {
-      console.error('error creating user' + err.message);
+      res.status(500).send(err);
     });
-
-
-
 });
 
 // routes for app
@@ -79,7 +120,7 @@ app.post('/links',
   (req, res, next) => {
     var url = req.body.url;
     if (!models.Links.isValidUrl(url)) {
-    // send back a 404 if link is not valid
+      // send back a 404 if link is not valid
       return res.sendStatus(404);
     }
 
