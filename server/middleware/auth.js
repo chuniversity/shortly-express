@@ -1,6 +1,7 @@
 const models = require('../models');
 const Promise = require('bluebird');
 
+// next just means "done"
 module.exports.createSession = (req, res, next) => {
 };
 

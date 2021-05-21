@@ -19,6 +19,7 @@ class Sessions extends Model {
    * @returns {boolean} A boolean indicating if the session is associated
    * with a user that is logged in.
    */
+  // if logged in, don't need to relog in on browser refresh
   isLoggedIn(session) {
     return !!session.user;
   }
@@ -36,9 +37,11 @@ class Sessions extends Model {
     return super.get.call(this, options)
       .then(session => {
         if (!session || !session.userId) {
+          // if there's a cookie mismatch?
           return session;
         }
         return Users.get({ id: session.userId }).then(user => {
+          // link session (session is just data linked to a cookie ID) to the user
           session.user = user;
           return session;
         });
