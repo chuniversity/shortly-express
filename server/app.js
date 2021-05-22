@@ -3,8 +3,8 @@ const path = require('path');
 const utils = require('./lib/hashUtils');
 const partials = require('express-partials');
 const bodyParser = require('body-parser');
-const Auth = require('./middleware/auth');
 const cookie = require('./middleware/cookieParser');
+const Auth = require('./middleware/auth');
 const models = require('./models');
 
 
@@ -74,7 +74,6 @@ app.get('/signup', (req, res, next) => {
 
 app.post('/signup', (req, res, next) => {
   // get data from request body
-  // var params = [req.body.]
   var name = req.body.username;
   var options = { username: name };
   models.Users.get(options)
